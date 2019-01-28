@@ -21,7 +21,7 @@ nV = 3 # Triangles
 grayscale = True
 headless = True
 
-refImg = Image.open('x-ray.jpg')
+refImg = Image.open('../x-ray2.jpg')
 refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
 
@@ -83,10 +83,7 @@ def DrawImage(polyList, imageX, imageY):
     
     return im
 
-def updateImg(i):
-    global allPoly, prevFit, gen, im
-    
-    
+def iterate(allPoly, prevFit, gen, im):
     if len(allPoly) < nPoly:
         initVertex1 = [random.randint(0,imageX-1), random.randint(0,imageY-1)]
         
@@ -194,26 +191,34 @@ def updateImg(i):
             im = im2.copy()
         else:
             del(allPoly[-1])
-            currFit,_ = prevFit
+            currFit = prevFit
                      
     # Mutation
-    mutatePoly = random.randint(0, len(allPoly)-1)
-    origPoly = copy.deepcopy(allPoly[mutatePoly])
-    
-    allPoly[mutatePoly].SoftMutate()
-    
-    currFit,_ = fitness(allPoly)
-    
-    if currFit >= prevFit:
-        allPoly[mutatePoly] = copy.deepcopy(origPoly)
-    else:
-        prevFit = currFit
+    if len(allPoly) > 0:
+        mutatePoly = random.randint(0, len(allPoly)-1)
+        origPoly = copy.deepcopy(allPoly[mutatePoly])
+        
+        allPoly[mutatePoly].SoftMutate()
+        
+        currFit,_ = fitness(allPoly)
+        
+        if currFit >= prevFit:
+            allPoly[mutatePoly] = copy.deepcopy(origPoly)
+        else:
+            prevFit = currFit
      
     gen = gen + 1
     print(str(1-prevFit) + " " + str(gen) + " " + str(len(allPoly)))
     im = DrawImage(allPoly, imageX, imageY)
     myobj.set_data(im)
     
+    return allPoly, prevFit, gen, im
+
+def updateImg(i):
+    global allPoly, prevFit, gen, im
+
+    allPoly, prevFit, gen, im = iterate(allPoly, prevFit, gen, im)
+    myobj.set_data(im)
     return myobj
 
 allPoly = []
@@ -228,7 +233,6 @@ prevFit,im = fitness(allPoly)
 
 gen = 1
 
-
 if not headless:    
     fig = pyplot.figure()
     myobj = pyplot.imshow(im)
@@ -237,126 +241,6 @@ if not headless:
     pyplot.show()
 else:
     
-
 #    for loops in range(0,699):
     while True:
-        if len(allPoly) < nPoly:
-            #initVertices = [[random.randint(0, imageX-1), random.randint(0, imageY-1)] for _ in range(nV) ]
-            initVertex1 = [random.randint(0,imageX-1), random.randint(0,imageY-1)]
-            
-            maxX = clamp(initVertex1[0]+30, 0, imageX)
-            minX = clamp(initVertex1[0]-30, 0, imageX)
-            
-            maxY = clamp(initVertex1[1]+30, 0, imageY)
-            minY = clamp(initVertex1[1]-30, 0, imageY)
-            
-            initVertex2 = [random.randint(minX, maxX), random.randint(minY,maxY)]
-            initVertex3 = [random.randint(minX, maxX), random.randint(minY,maxY)]
-            
-            initVertices = [initVertex1, initVertex2, initVertex3]
-            
-            initFill = random.randint(0, 255)
-            
-            initRGBA = [initFill, initFill, initFill, random.randint(0,255)]
-            
-            allPoly.append(Polygon(initVertices, initRGBA, imageX, imageY, nV))
-            
-            im2 = copy.deepcopy(im)
-            draw = ImageDraw.Draw(im2, 'RGBA')
-            allPoly[-1].DrawOnImage(draw)
-            
-            newFit = fitness2(im2)
-            #newFit = fitness(allPoly)
-            if prevFit > newFit:
-                
-                for x in [-1, 1]:
-                    while(True):
-                        
-                        initColor = allPoly[-1].fill[0:3]
-                        allPoly[-1].fill[0:3] = [clamp(initColor[0]+ x*5, 0, 255) for _ in range(0,3)]
-                        
-                        im2 = im.copy()
-                        draw = ImageDraw.Draw(im2, 'RGBA')
-                        allPoly[-1].DrawOnImage(draw)
-                        
-                        currFit = fitness2(im2)
-                        #print(str(currFit) + " " + str(initFit))
-                        
-                        if currFit >= newFit:
-                            allPoly[-1].fill[0:3] = initColor
-                            break
-                        else:
-                            newFit = currFit
-                        
-                # Optimize alpha
-                for x in [-1, 1]:
-                    while(True):
-                            
-                        initAlpha = allPoly[-1].fill[3]
-                        allPoly[-1].fill[3] = clamp(initAlpha + x*5, 0, 255)
-                        
-                        im2 = im.copy()
-                        draw = ImageDraw.Draw(im2, 'RGBA')
-                        allPoly[-1].DrawOnImage(draw)
-                        
-                        currFit = fitness2(im2)
-                        #print(str(currFit) + " " + str(initFit))
-                        
-                        if currFit >= newFit:
-                            allPoly[-1].fill[3] = initAlpha
-                            break
-                        else:
-                            newFit = currFit
-                            
-                # Optimize the 3 vertices
-                for x in [0,2]:
-                    for y in [0, 1]:
-                        for z in [-1,1]:
-                            while(True):
-                                initVal = allPoly[-1].vertices[x][y]
-                                
-                                allPoly[-1].vertices[x][y] = clamp(initVal + z*15, 0, 255)
-                                
-                                im2 = im.copy()
-                                draw = ImageDraw.Draw(im2, 'RGBA')
-                                allPoly[-1].DrawOnImage(draw)
-                                
-                                currFit = fitness2(im2)
-                                
-                                if currFit >= newFit:
-                                    allPoly[-1].vertices[x][y] = initVal
-                                    break
-                                else:
-                                    newFit = currFit
-                            
-                currFit = newFit
-                im = im2.copy()
-            else:
-                del(allPoly[-1])
-                currFit = prevFit
-        prevFit = currFit
-        
-        # Mutation
-        if len(allPoly) > 0:
-            mutatePoly = random.randint(0, len(allPoly)-1)
-            origPoly = copy.deepcopy(allPoly[mutatePoly])
-            
-            allPoly[mutatePoly].SoftMutate()
-            
-            currFit, im = fitness(allPoly)
-            
-            if currFit >= prevFit:
-                allPoly[mutatePoly] = copy.deepcopy(origPoly)
-                im = DrawImage(allPoly, imageX, imageY)
-            else:
-                prevFit = currFit
-            
-        #im = DrawImage(allPoly, imageX, imageY)
-        #myobj.set_data(im)
-        gen = gen + 1
-        print(str(1-prevFit) + " " + str(gen) + " " + str(len(allPoly)))
-       # im = DrawImage(allPoly, imageX, imageY)
-    
-
-
-
+        allPoly, prevFit, gen, im = iterate(allPoly, prevFit, gen, im)
