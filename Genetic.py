@@ -328,10 +328,6 @@ def updateImg(i):
             
     im = DrawImage(population[0], imageX, imageY)
 
-       
-    maxDiff = 255.0*imageX*imageY*uniqueRGB
-  
-
     #maxDiff = 255*imageX*imageY*uniqueRGB
     #print(1 - min(popFitness)/maxDiff)
     print(1-min(popFitness))
@@ -379,13 +375,11 @@ else:
     while True:
         try:
             
-            population, popFitness = CreateNewGen(population)
+            population, popFitness = CreateNewGen(population, popFitness)
             
             im = DrawImage(population[0], imageX, imageY)
 
-               
-            maxDiff = 255.0*imageX*imageY*uniqueRGB
-            print(1 - min(popFitness)/maxDiff)
+            print(1-min(popFitness))
             
         except KeyboardInterrupt:
             #p.close()
