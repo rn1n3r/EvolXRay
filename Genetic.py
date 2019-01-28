@@ -21,9 +21,24 @@ from Shapes import Polygon
 random.seed(321)
 
 # Load image 
-refImg = Image.open('../x-ray2.jpg')
+refImg = Image.open('x-ray2.jpg')
 refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
+
+
+nPoly = 50
+nV = 3 # Triangle
+popSize = 30
+grayscale = True
+headless = True
+hotStart = False
+
+selectionPercent = 0.25
+popSize = popSize - (popSize % math.floor(popSize*selectionPercent))
+popSize = int(popSize)
+
+imageX = refArray.shape[1]
+imageY = refArray.shape[0]
 
 #if len(refArray.shape) < 3:
 #    refArray = np.dstack([refArray]*3)
@@ -36,19 +51,6 @@ if len(refArray.shape) < 3:
 if refArray.shape[2] >= 3 and grayscale:
     refArray = refArray[:,:,0]
 
-
-nPoly = 50
-nV = 3 # Triangle
-popSize = 30
-grayscale = True
-headless = False
-hotStart = False
-
-selectionPercent = 0.25
-popSize = popSize - (popSize % math.floor(popSize*selectionPercent))
-
-imageX = refArray.shape[1]
-imageY = refArray.shape[0]
 
 if grayscale:
     uniqueRGB = 1
