@@ -19,9 +19,9 @@ random.seed(123)
 nPoly = 2000
 nV = 3 # Triangles
 grayscale = True
-headless = False
+headless = True
 
-refImg = Image.open('x-ray2.jpg')
+refImg = Image.open('x-ray.jpg')
 refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
 
@@ -50,7 +50,7 @@ def fitness (indiv):
     if grayscale:
         imArray = np.asarray(image).astype(np.int16)[:,:,0]
         delta = np.abs(refArray - imArray)
-        diff = np.sum(delta)/(255*imageX*imageY*uniqueRGB)
+        diff = np.sum(delta)/(255.0*imageX*imageY*uniqueRGB)
         
     else:
         imArray = np.asarray(image).astype(np.int16)
@@ -64,7 +64,7 @@ def fitness2(image):
     if grayscale:
         imArray = np.asarray(image).astype(np.int16)[:,:,0]
         delta = np.abs(refArray - imArray)
-        diff = np.sum(delta)/(255*imageX*imageY*uniqueRGB)
+        diff = np.sum(delta)/(255.0*imageX*imageY*uniqueRGB)
      #   diff = 1-compare_ssim(refArray, np.asarray(image).astype(np.int16)[:,:,0]) #np.sum(delta)
        
     else:
@@ -238,8 +238,8 @@ if not headless:
 else:
     
 
-    for loops in range(0,699):
-  #  while True:
+#    for loops in range(0,699):
+    while True:
         if len(allPoly) < nPoly:
             #initVertices = [[random.randint(0, imageX-1), random.randint(0, imageY-1)] for _ in range(nV) ]
             initVertex1 = [random.randint(0,imageX-1), random.randint(0,imageY-1)]
