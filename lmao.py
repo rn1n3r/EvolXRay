@@ -337,18 +337,19 @@ else:
         prevFit = currFit
         
         # Mutation
-        mutatePoly = random.randint(0, len(allPoly)-1)
-        origPoly = copy.deepcopy(allPoly[mutatePoly])
-        
-        allPoly[mutatePoly].SoftMutate()
-        
-        currFit, im = fitness(allPoly)
-        
-        if currFit >= prevFit:
-            allPoly[mutatePoly] = copy.deepcopy(origPoly)
-            im = DrawImage(allPoly, imageX, imageY)
-        else:
-            prevFit = currFit
+        if len(allPoly) > 0:
+            mutatePoly = random.randint(0, len(allPoly)-1)
+            origPoly = copy.deepcopy(allPoly[mutatePoly])
+            
+            allPoly[mutatePoly].SoftMutate()
+            
+            currFit, im = fitness(allPoly)
+            
+            if currFit >= prevFit:
+                allPoly[mutatePoly] = copy.deepcopy(origPoly)
+                im = DrawImage(allPoly, imageX, imageY)
+            else:
+                prevFit = currFit
             
         #im = DrawImage(allPoly, imageX, imageY)
         #myobj.set_data(im)
