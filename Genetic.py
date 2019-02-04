@@ -31,7 +31,7 @@ nV = 3 # Triangle
 popSize = 30
 grayscale = True
 headless = True
-hotStart = False
+hotStart = True
 
 selectionPercent = 0.25
 popSize = popSize - (popSize % math.floor(popSize*selectionPercent))
@@ -381,7 +381,7 @@ population = sorted(list(zip(popFitness, population)), key=lambda x: x[0])
 popFitness = [x[0] for x in population]
 population = [x[1] for x in population]
 
-im = DrawImage(population[0], imageX, imageY)
+imList = []
 
 gen = 0
 
@@ -393,13 +393,13 @@ if not headless:
     pyplot.show()
 
 else:
-    for x in range(50):
+    for x in range(1000):
 #    while True:
         try:
             
             population, popFitness = CreateNewGen(population, popFitness)
             
-            im = DrawImage(population[0], imageX, imageY)
+            imList.append(DrawImage(population[0], imageX, imageY))
             gen += 1
             print(str(1-min(popFitness)) + " " + str(gen))
             
