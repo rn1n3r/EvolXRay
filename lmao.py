@@ -19,7 +19,7 @@ random.seed(123)
 nPoly = 2000
 nV = 3 # Triangles
 grayscale = True
-headless = True
+headless = False
 
 refImg = Image.open('../x-ray2.jpg')
 refImg.load()
@@ -207,7 +207,7 @@ def iterate(allPoly, prevFit, gen, im):
         else:
             prevFit = currFit
      
-    gen = gen + 1
+    gen += 1
     print(str(1-prevFit) + " " + str(gen) + " " + str(len(allPoly)))
     im = DrawImage(allPoly, imageX, imageY)
     myobj.set_data(im)

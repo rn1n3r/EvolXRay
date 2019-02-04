@@ -120,24 +120,29 @@ def GetPopFitness(population, popSize, imageX, imageY, p):
     return popFitness
 
 
+def copyPolyList(polyList):
+    newPolyList = [Polygon([[z[0], z[1]] for z in [y for y in x.vertices]], [y for y in x.fill], imageX, imageY) for x in polyList]
+    return newPolyList
+
 def CreateNewGen(population, popFitness):
-    # Sort by fitness
-#    population = sorted(list(zip(popFitness, population)), key=lambda x: x[0])
-#    population = [x[1] for x in population]
-#    
+    # population and popFitness are presorted
+
     newPop = []
+    newPopFitness = []
     nPoly = 1000
     parents = int(math.floor(popSize*selectionPercent))
     
     # Calculate fittest individual from previous generation
-    bestCandidate = copy.deepcopy(population[0])
-    bestPrevFitness,_ = fitness(bestCandidate)
+    bestPrevFitness,_ = fitness(population[0])
     
     for i in range(0,parents):
+        prevFit = popFitness[i]
+        im = DrawImage(population[i], imageX, imageY)
         for j in range(0, popSize//parents):
             firstParent = i
             randomParent = random.randint(0, parents)
-            newPop.append(copy.deepcopy(population[firstParent]))
+            #newPop.append(copy.deepcopy(population[firstParent]))
+            newPop.append(copyPolyList(population[firstParent]))
             
             if len(newPop[-1]) < nPoly:
                 initVertex1 = [random.randint(0,imageX-1), random.randint(0,imageY-1)]
@@ -171,15 +176,14 @@ def CreateNewGen(population, popFitness):
                     initFill = refArray[avgX, avgY]
                 
                 initRGBA = [initFill, initFill, initFill, random.randint(0,255)]
-                im = DrawImage(newPop[-1], imageX, imageY)
                 newPop[-1].append(Polygon(initVertices, initRGBA, imageX, imageY, nV))
                 
                 
                 newFit,_ = fitness(newPop[-1])
-                prevFit = popFitness[firstParent]
-                #newFit = fitness(allPoly)
+                
+
                 if prevFit > newFit:
-                    
+
                     for x in [-1, 1]:
                         while(True):
                             
@@ -191,8 +195,7 @@ def CreateNewGen(population, popFitness):
                             newPop[-1][-1].DrawOnImage(draw)
                             
                             currFit = fitness2(im2)
-                            #print(str(currFit) + " " + str(initFit))
-                            
+
                             if currFit >= newFit:
                                 newPop[-1][-1].fill[0:3] = initColor
                                 break
@@ -218,7 +221,7 @@ def CreateNewGen(population, popFitness):
                                 break
                             else:
                                 newFit = currFit
-                                
+                              
                     # Optimize the 3 vertices
                     for x in [0,2]:
                         for y in [0, 1]:
@@ -240,33 +243,46 @@ def CreateNewGen(population, popFitness):
                                     else:
                                         newFit = currFit
                                 
-                    currFit = newFit
-                    im = im2.copy()
-                else:
-                    del(newPop[-1][-1])
-                    currFit = prevFit
                     
-            
-            
-            
-            
+                   # im = im2.copy()
+                else: 
+                    del(newPop[-1][-1])
+                    newFit = prevFit
+                                    
             
             
             for k in range(0, len(population[i])):
                # if random.randint(0, 100) < 50:
                     #newPop[-1][k] = copy.deepcopy(population[randomParent][k])
+                    # Mutation
+                if len(allPoly) > 0:
                     
-                if random.randint(0, 100) < 1:
-                    newPop[-1][k].SoftMutate()
+                    if random.randint(0, 100) < 1:
+                        origPoly = copyPolyList(newPop[-1][k])
+                        newPop[-1][k].SoftMutate()
+                
+                        currFit,_ = fitness(newPop[-1])
                     
-    newPopFitness = GetPopFitness(newPop, popSize, imageX, imageY, 1)
+                        if currFit >= newFit:
+                            newPop[-1][k] = copyPolyList(origPoly)
+                            #currFit = prevFit
+                        else:
+                            newFit = currFit
+                            
+            newPopFitness.append(newFit)                           
+                                        
+
+    
     
     newPop = sorted(list(zip(newPopFitness, newPop)), key=lambda x: x[0])
+    newPopFitness = [x[0] for x in newPop]
     newPop = [x[1] for x in newPop]
+   
+
     
     # If the fittest in the new generation is less fit than the best from before, replace it
     if bestPrevFitness < min(newPopFitness):
-        newPop[0] = copy.deepcopy(bestCandidate)
+        newPop[0] = copyPolyList(population[0])
         newPopFitness[newPopFitness.index(min(newPopFitness))] = bestPrevFitness
         
 #  
@@ -322,7 +338,7 @@ def CreateNewGen(population, popFitness):
     return newPop, newPopFitness
 
 def updateImg(i):
-    global population, popFitness
+    global population, popFitness, gen
     
     population, popFitness = CreateNewGen(population, popFitness)
             
@@ -330,7 +346,8 @@ def updateImg(i):
 
     #maxDiff = 255*imageX*imageY*uniqueRGB
     #print(1 - min(popFitness)/maxDiff)
-    print(1-min(popFitness))
+    gen += 1
+    print(str(1-min(popFitness)) + " " + str(gen))
     myobj.set_data(im)
     
     
@@ -342,26 +359,31 @@ if not hotStart:
     population = list()
     
     for x in range(popSize):
-        initVertices = [[[random.randint(0,imageX), random.randint(0,imageY)] for _ in range(nV)] for _ in range(nPoly)] 
-        
-        initRGBA = []
-        for i in range(nPoly):
-            if grayscale:
-                initGray = random.randint(0,255)
-                initRGBA.append([initGray, initGray, initGray, random.randint(0,255)])
-            else:
-                initRGBA.append([random.randint(0,255), random.randint(0,255), random.randint(0,255), random.randint(0,255)])
-        #initRGBA = [[random.randint(0,255) for _ in range(4)]for _ in range(nPoly)]
-        allPoly = [Polygon(initVertices[i], initRGBA[i], imageX, imageY, nV, grayscale) for i in range(nPoly)]
+#        initVertices = [[[random.randint(0,imageX), random.randint(0,imageY)] for _ in range(nV)] for _ in range(nPoly)] 
+#        
+#        initRGBA = []
+#        for i in range(nPoly):
+#            if grayscale:
+#                initGray = random.randint(0,255)
+#                initRGBA.append([initGray, initGray, initGray, random.randint(0,255)])
+#            else:
+#                initRGBA.append([random.randint(0,255), random.randint(0,255), random.randint(0,255), random.randint(0,255)])
+#        
+#        allPoly = [Polygon(initVertices[i], initRGBA[i], imageX, imageY, nV, grayscale) for i in range(nPoly)]
         allPoly = []
         population.append(allPoly)
 
 #p = Pool(4)
 p = 1
 #popFitness = GetPopFitness(population, popSize, imageX, imageY, p)
-popFitness = [-1]*popSize
+popFitness =  GetPopFitness(population, popSize, imageX, imageY, p)
+population = sorted(list(zip(popFitness, population)), key=lambda x: x[0])
+popFitness = [x[0] for x in population]
+population = [x[1] for x in population]
 
 im = DrawImage(population[0], imageX, imageY)
+
+gen = 0
 
 if not headless:
     fig = pyplot.figure()
@@ -371,15 +393,15 @@ if not headless:
     pyplot.show()
 
 else:
-    
-    while True:
+    for x in range(50):
+#    while True:
         try:
             
             population, popFitness = CreateNewGen(population, popFitness)
             
             im = DrawImage(population[0], imageX, imageY)
-
-            print(1-min(popFitness))
+            gen += 1
+            print(str(1-min(popFitness)) + " " + str(gen))
             
         except KeyboardInterrupt:
             #p.close()
