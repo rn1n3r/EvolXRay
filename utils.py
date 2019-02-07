@@ -9,13 +9,14 @@ import cv2
 import numpy as np
 
 from PIL import ImageDraw
-
+import pickle
+    
 
 def WriteFrames (imList, filename):
     
     imageX, imageY = imList[0].size
     
-    video = cv2.VideoWriter(filename, -1, 50, (imageX, imageY))
+    video = cv2.VideoWriter(filename, -1, 20, (imageX, imageY))
     
 
     for i,im in enumerate(imList):
@@ -26,3 +27,10 @@ def WriteFrames (imList, filename):
         video.write(np.asarray(imCopy))
         
     video.release()
+    
+    
+def WriteObjPickle (obj, filename):
+    pickle.dump(obj, open(filename, mode="wb"))
+    
+def ReadObjPickle (filename):
+    return pickle.load(open(filename, mode="rb"))

@@ -248,23 +248,26 @@ def CreateNewGen(population, popFitness):
                 else: 
                     del(newPop[-1][-1])
                     newFit = prevFit
+                    
+            else:
+                newFit = prevFit
                                     
             
             
-            for k in range(0, len(population[i])):
+            for k in range(0, len(newPop[-1])):
                # if random.randint(0, 100) < 50:
                     #newPop[-1][k] = copy.deepcopy(population[randomParent][k])
                     # Mutation
-                if len(allPoly) > 0:
-                    
+                if len(newPop[-1]) > 0:
+                    #print("hi")
                     if random.randint(0, 100) < 1:
-                        origPoly = copyPolyList(newPop[-1][k])
+                        origPoly = copy.deepcopy(newPop[-1][k])
                         newPop[-1][k].SoftMutate()
                 
                         currFit,_ = fitness(newPop[-1])
                     
                         if currFit >= newFit:
-                            newPop[-1][k] = copyPolyList(origPoly)
+                            newPop[-1][k] = copy.deepcopy(origPoly)
                             #currFit = prevFit
                         else:
                             newFit = currFit
@@ -393,7 +396,7 @@ if not headless:
     pyplot.show()
 
 else:
-    for x in range(1000):
+    for x in range(3000):
 #    while True:
         try:
             
