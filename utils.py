@@ -18,7 +18,6 @@ def WriteFrames (imList, filename):
     video = cv2.VideoWriter(filename, -1, 50, (imageX, imageY))
     
 
-    
     for i,im in enumerate(imList):
         imCopy = im.copy()
         draw = ImageDraw.Draw(imCopy)

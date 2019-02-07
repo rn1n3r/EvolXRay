@@ -31,7 +31,7 @@ nV = 3 # Triangle
 popSize = 30
 grayscale = True
 headless = True
-hotStart = True
+hotStart = False
 
 selectionPercent = 0.25
 popSize = popSize - (popSize % math.floor(popSize*selectionPercent))
