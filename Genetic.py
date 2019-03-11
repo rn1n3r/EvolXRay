@@ -5,6 +5,8 @@ Genetic alg version
 @author: edward
 """
 
+import utils
+
 from PIL import Image, ImageDraw
 from matplotlib.pyplot import imshow, figure
 from matplotlib import animation, pyplot
@@ -14,6 +16,8 @@ import copy
 import sys
 import math
 from skimage.measure import compare_ssim
+
+
 
 from multiprocessing import Pool
 
@@ -33,7 +37,7 @@ popSize = 30
 grayscale = True
 hotStart = False
 
-headless = False
+headless = True
 if len(sys.argv) > 1:
     headless = True
 
@@ -60,6 +64,7 @@ if grayscale:
     uniqueRGB = 1
 else:
     uniqueRGB = 3
+
 
 
 def clamp (x, minVal, maxVal):
@@ -400,13 +405,14 @@ if not headless:
     pyplot.show()
 
 else:
-    for x in range(3000):
+    for x in range(300):
 #    while True:
         try:
             
             population, popFitness = CreateNewGen(population, popFitness)
             
-            imList.append(DrawImage(population[0], imageX, imageY))
+            if x % 300 == 0:
+                imList.append(DrawImage(population[0], imageX, imageY))
             gen += 1
             print(str(1-min(popFitness)) + " " + str(gen))
             
@@ -415,4 +421,5 @@ else:
             print("Bye!")
             im.save("imageGenetic.png")
             break
-    
+    print("Writing pickle to disk")
+    utils.WriteObjPickle(imList, "imList-every300.pickle")
