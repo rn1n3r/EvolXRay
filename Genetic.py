@@ -11,6 +11,7 @@ from matplotlib import animation, pyplot
 import numpy as np
 import random
 import copy
+import sys
 import math
 from skimage.measure import compare_ssim
 
@@ -30,8 +31,11 @@ nPoly = 50
 nV = 3 # Triangle
 popSize = 30
 grayscale = True
-headless = False
 hotStart = False
+
+headless = False
+if len(sys.argv) > 1:
+    headless = True
 
 selectionPercent = 0.25
 popSize = popSize - (popSize % math.floor(popSize*selectionPercent))
