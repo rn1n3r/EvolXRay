@@ -31,7 +31,7 @@ refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
 
 
-nPoly = 50
+nPoly = 15000
 nV = 3 # Triangle
 popSize = 30
 grayscale = True
@@ -138,7 +138,6 @@ def CreateNewGen(population, popFitness):
 
     newPop = []
     newPopFitness = []
-    nPoly = 1000
     parents = int(math.floor(popSize*selectionPercent))
     
     # Calculate fittest individual from previous generation
