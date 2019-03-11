@@ -21,7 +21,7 @@ from Shapes import Polygon
 random.seed(321)
 
 # Load image 
-refImg = Image.open('x-ray2.jpg')
+refImg = Image.open('../img/x-ray2.jpg')
 refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
 
@@ -30,7 +30,7 @@ nPoly = 50
 nV = 3 # Triangle
 popSize = 30
 grayscale = True
-headless = True
+headless = False
 hotStart = False
 
 selectionPercent = 0.25
@@ -390,7 +390,7 @@ gen = 0
 
 if not headless:
     fig = pyplot.figure()
-    myobj = pyplot.imshow(im)
+    myobj = pyplot.imshow(DrawImage(population[0], imageX, imageY))
         
     ani = animation.FuncAnimation(fig, updateImg, interval = 0)
     pyplot.show()
