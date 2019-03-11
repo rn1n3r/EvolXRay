@@ -419,6 +419,8 @@ else:
             #p.close()
             print("Bye!")
             im.save("imageGenetic.png")
+            print("Writing pickle to disk")
+            utils.WriteObjPickle(imList, "imList-every300.pickle")
             break
     print("Writing pickle to disk")
     utils.WriteObjPickle(imList, "imList-every300.pickle")
