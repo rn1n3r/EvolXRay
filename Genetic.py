@@ -411,6 +411,7 @@ else:
             population, popFitness = CreateNewGen(population, popFitness)
             
             if x % 300 == 0:
+                DrawImage(population[0], imageX, imageY).save("img/"+str(x)+".png")
                 imList.append(DrawImage(population[0], imageX, imageY))
             gen += 1
             print(str(1-min(popFitness)) + " " + str(gen))
@@ -418,9 +419,9 @@ else:
         except KeyboardInterrupt:
             #p.close()
             print("Bye!")
-            im.save("imageGenetic.png")
-            print("Writing pickle to disk")
-            utils.WriteObjPickle(imList, "imList-every300.pickle")
+            #im.save("imageGenetic.png")
+            #print("Writing pickle to disk")
+            #utils.WriteObjPickle(imList, "imList-every300.pickle")
             break
-    print("Writing pickle to disk")
-    utils.WriteObjPickle(imList, "imList-every300.pickle")
+    #print("Writing pickle to disk")
+    #utils.WriteObjPickle(imList, "imList-every300.pickle")
