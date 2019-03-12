@@ -26,7 +26,7 @@ from Shapes import Polygon
 random.seed(321)
 
 # Load image 
-refImg = Image.open('../img/x-ray2.jpg')
+refImg = Image.open('../img/details.jpg')
 refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
 
@@ -37,7 +37,7 @@ popSize = 30
 grayscale = True
 hotStart = False
 
-headless = True
+headless = False
 if len(sys.argv) > 1:
     headless = True
 
@@ -174,9 +174,9 @@ def CreateNewGen(population, popFitness):
                 avgY = sum([y[1] for y in initVertices])//3
         
                 if avgX > 0 and avgX < imageX-1 and avgY > 0 and avgY < imageY-1:
-                    initFill = refArray[avgX, avgY] + refArray[avgX+1, avgY] + \
-                                refArray[avgX-1, avgY] + refArray[avgX, avgY+1] + \
-                                refArray[avgX, avgY-1]
+                    initFill = refArray[avgY, avgX] + refArray[avgY+1, avgX] + \
+                                refArray[avgY-1, avgX] + refArray[avgY, avgX+1] + \
+                                refArray[avgY, avgX-1]
                     
                     initFill = initFill//5
                    
