@@ -26,7 +26,7 @@ from Shapes import Polygon
 random.seed(321)
 
 # Load image 
-refImg = Image.open('../img/details.jpg')
+refImg = Image.open('../img/x-ray2.jpg')
 refImg.load()
 refArray = np.asarray(refImg).astype(np.int16)
 
@@ -66,7 +66,6 @@ else:
     uniqueRGB = 3
 
 
-
 def clamp (x, minVal, maxVal):
     return max(minVal, min(x, maxVal))
 
@@ -78,6 +77,7 @@ def fitness (indiv):
     
     if grayscale:
         imArray = np.asarray(image).astype(np.int16)[:,:,0]
+        #imArray = np.asarray(image).astype(np.int16)[roi1[0]:roi2[0]+1, roi1[1]:roi2[1]+1, 0]
         delta = np.abs(refArray - imArray)
         diff = np.sum(delta)/(255.0*imageX*imageY*uniqueRGB)
         
@@ -237,7 +237,12 @@ def CreateNewGen(population, popFitness):
                                 while(True):
                                     initVal = newPop[-1][-1].vertices[x][y]
                                     
-                                    newPop[-1][-1].vertices[x][y] = clamp(initVal + z*15, 0, 255)
+                                    if y == 0:
+                                        limit = maxX
+                                    else:
+                                        limit = maxY
+                                        
+                                    newPop[-1][-1].vertices[x][y] = clamp(initVal + z*15, 0, limit)
                                     
                                     im2 = im.copy()
                                     draw = ImageDraw.Draw(im2, 'RGBA')
@@ -353,7 +358,7 @@ def updateImg(i):
     
     population, popFitness = CreateNewGen(population, popFitness)
             
-    im = DrawImage(population[0], imageX, imageY)
+    im = DrawImage(population[0], 255, 255)
 
     #maxDiff = 255*imageX*imageY*uniqueRGB
     #print(1 - min(popFitness)/maxDiff)
@@ -398,7 +403,7 @@ gen = 0
 
 if not headless:
     fig = pyplot.figure()
-    myobj = pyplot.imshow(DrawImage(population[0], imageX, imageY))
+    myobj = pyplot.imshow(DrawImage(population[0], 255, 255))
         
     ani = animation.FuncAnimation(fig, updateImg, interval = 0)
     pyplot.show()
