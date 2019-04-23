@@ -21,7 +21,7 @@ from Shapes import Polygon
 random.seed(321)
 
 # Load image 
-refImg = Image.open('../img/x-ray2.jpg')
+refImg = Image.open('../img/NIH-1.png')
 refImg.load()
 refArrayOrig = np.asarray(refImg).astype(np.int16)
 
@@ -32,7 +32,7 @@ popSize = 30
 grayscale = True
 hotStart = False
 
-headless = True
+headless = False
 if len(sys.argv) > 1:
     headless = True
 
@@ -276,7 +276,7 @@ def CreateNewGen(population, popFitness):
             # Crossover
             if random.randint(0,100) < 100:
                 
-                for x in range(0, len(population[i])-1):
+                for x in range(0, min(len(population[randomParent]), len(population[i]))-1):
                     if random.randint(0,1) == 1:
                         newPop[-1][x].vertices = population[randomParent][x].vertices
                         newPop[-1][x].fill = population[randomParent][x].fill
