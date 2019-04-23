@@ -15,11 +15,6 @@ import random
 import copy
 import sys
 import math
-from skimage.measure import compare_ssim
-
-
-
-from multiprocessing import Pool
 
 from Shapes import Polygon
 #random.seed(123)
@@ -28,7 +23,7 @@ random.seed(321)
 # Load image 
 refImg = Image.open('../img/x-ray2.jpg')
 refImg.load()
-refArray = np.asarray(refImg).astype(np.int16)
+refArrayOrig = np.asarray(refImg).astype(np.int16)
 
 
 nPoly = 15000
@@ -37,7 +32,7 @@ popSize = 30
 grayscale = True
 hotStart = False
 
-headless = False
+headless = True
 if len(sys.argv) > 1:
     headless = True
 
@@ -45,25 +40,41 @@ selectionPercent = 0.25
 popSize = popSize - (popSize % math.floor(popSize*selectionPercent))
 popSize = int(popSize)
 
-imageX = refArray.shape[1]
-imageY = refArray.shape[0]
+imageX = refArrayOrig.shape[1]
+imageY = refArrayOrig.shape[0]
 
 #if len(refArray.shape) < 3:
 #    refArray = np.dstack([refArray]*3)
 #    
 #if refArray.shape[2] > 3:
 #    refArray = refArray[:,:,0:3]
-if len(refArray.shape) < 3:
-    refArray = np.dstack([refArray]*3)
+if len(refArrayOrig.shape) < 3:
+    refArrayOrig = np.dstack([refArrayOrig]*3)
     
-if refArray.shape[2] >= 3 and grayscale:
-    refArray = refArray[:,:,0]
+if refArrayOrig.shape[2] >= 3 and grayscale:
+    refArrayOrig = refArrayOrig[:,:,0]
 
 
 if grayscale:
     uniqueRGB = 1
 else:
     uniqueRGB = 3
+
+
+# y, x
+roi1 = [0,0]
+roi2 = [254,254]
+
+#roi1 = [75,75]
+#roi2 = [170,170]
+
+imageY = roi2[0]+1
+imageX = roi2[1]+1
+
+imageMinY = roi1[0]
+imageMinX = roi1[1]
+
+refArray = refArrayOrig[roi1[0]:roi2[0]+1, roi1[1]:roi2[1]+1]
 
 
 def clamp (x, minVal, maxVal):
@@ -73,13 +84,14 @@ def clamp (x, minVal, maxVal):
 # Sum of differences
 def fitness (indiv):
     
-    image = DrawImage(indiv, imageX, imageY)
+    image = DrawImage(indiv, imageX-imageMinX, imageY-imageMinY)
     
     if grayscale:
         imArray = np.asarray(image).astype(np.int16)[:,:,0]
         #imArray = np.asarray(image).astype(np.int16)[roi1[0]:roi2[0]+1, roi1[1]:roi2[1]+1, 0]
         delta = np.abs(refArray - imArray)
-        diff = np.sum(delta)/(255.0*imageX*imageY*uniqueRGB)
+        diff = np.sum(delta)/(255.0*(imageX-imageMinX)*(imageY-imageMinY)*uniqueRGB)
+        
         
     else:
         imArray = np.asarray(image).astype(np.int16)
@@ -91,9 +103,11 @@ def fitness (indiv):
 def fitness2(image):
 
     if grayscale:
-        imArray = np.asarray(image).astype(np.int16)[:,:,0]
+        #imArray = np.asarray(image).astype(np.int16)[:,:,0]
+        imArray = np.asarray(image).astype(np.int16)[roi1[0]:roi2[0]+1, roi1[1]:roi2[1]+1, 0]
+        
         delta = np.abs(refArray - imArray)
-        diff = np.sum(delta)/(255.0*imageX*imageY*uniqueRGB)
+        diff = np.sum(delta)/(255.0*(imageX-imageMinX)*(imageY-imageMinY)*uniqueRGB)
      #   diff = 1-compare_ssim(refArray, np.asarray(image).astype(np.int16)[:,:,0]) #np.sum(delta)
        
     else:
@@ -103,8 +117,8 @@ def fitness2(image):
     return diff
 
 
-def DrawImage(polyList, imageX, imageY):
-    im = Image.new('RGB', (imageX, imageY))
+def DrawImage(polyList, lenX, lenY):
+    im = Image.new('RGB', (lenX, lenY))
     draw = ImageDraw.Draw(im, 'RGBA')
     
     for poly in polyList:
@@ -116,11 +130,6 @@ def DrawImage(polyList, imageX, imageY):
 def GetPopFitness(population, popSize, imageX, imageY, p):
     popFitness = [0]*popSize
     
-    #if __name__ == '__main__':
-        
-        #popFitness = [p.apply_async(fitness2, args=(x,)) for x in population]
-        #popFitness = [a.get() for a in popFitness]
-        
         
     for i, indiv in enumerate(population):
         popFitness[i],_ = fitness(indiv)
@@ -145,21 +154,23 @@ def CreateNewGen(population, popFitness):
     
     for i in range(0,parents):
         prevFit = popFitness[i]
-        im = DrawImage(population[i], imageX, imageY)
+        im = DrawImage(population[i], 255, 255)
         for j in range(0, popSize//parents):
             firstParent = i
             randomParent = random.randint(0, parents)
             #newPop.append(copy.deepcopy(population[firstParent]))
             newPop.append(copyPolyList(population[firstParent]))
             
+            
             if len(newPop[-1]) < nPoly:
-                initVertex1 = [random.randint(0,imageX-1), random.randint(0,imageY-1)]
                 
-                maxX = clamp(initVertex1[0]+30, 0, imageX)
-                minX = clamp(initVertex1[0]-30, 0, imageX)
+                initVertex1 = [random.randint(0,imageX-1-imageMinX), random.randint(0,imageY-1-imageMinY)]
                 
-                maxY = clamp(initVertex1[1]+30, 0, imageY)
-                minY = clamp(initVertex1[1]-30, 0, imageY)
+                maxX = clamp(initVertex1[0]+30, 0, imageX-imageMinX)
+                minX = clamp(initVertex1[0]-30, 0, imageX-imageMinX)
+                
+                maxY = clamp(initVertex1[1]+30, 0, imageY-imageMinY)
+                minY = clamp(initVertex1[1]-30, 0, imageY-imageMinY)
                 
                 initVertex2 = [random.randint(minX, maxX), random.randint(minY,maxY)]
                 initVertex3 = [random.randint(minX, maxX), random.randint(minY,maxY)]
@@ -168,7 +179,6 @@ def CreateNewGen(population, popFitness):
                 
                  
                 initFill = 0
-                #initFill = random.randint(0,255)
                 
                 avgX = sum([x[0] for x in initVertices])//3
                 avgY = sum([y[1] for y in initVertices])//3
@@ -190,105 +200,92 @@ def CreateNewGen(population, popFitness):
                 newFit,_ = fitness(newPop[-1])
                 
 
-                if prevFit > newFit:
+                for x in [-1, 1]:
+                    while(True):
+                        
+                        initColor = newPop[-1][-1].fill[0:3]
+                        newPop[-1][-1].fill[0:3] = [clamp(initColor[0]+ x*5, 0, 255) for _ in range(0,3)]
+                        
+                        im2 = im.copy()
+                        draw = ImageDraw.Draw(im2, 'RGBA')
+                        newPop[-1][-1].DrawOnImage(draw)
+                        
+                        currFit = fitness2(im2)
 
-                    for x in [-1, 1]:
-                        while(True):
+                        if currFit >= newFit:
+                            newPop[-1][-1].fill[0:3] = initColor
+                            break
+                        else:
+                            newFit = currFit
+                        
+                # Optimize alpha
+                for x in [-1, 1]:
+                    while(True):
                             
-                            initColor = newPop[-1][-1].fill[0:3]
-                            newPop[-1][-1].fill[0:3] = [clamp(initColor[0]+ x*5, 0, 255) for _ in range(0,3)]
-                            
-                            im2 = im.copy()
-                            draw = ImageDraw.Draw(im2, 'RGBA')
-                            newPop[-1][-1].DrawOnImage(draw)
-                            
-                            currFit = fitness2(im2)
-
-                            if currFit >= newFit:
-                                newPop[-1][-1].fill[0:3] = initColor
-                                break
-                            else:
-                                newFit = currFit
-                            
-                    # Optimize alpha
-                    for x in [-1, 1]:
-                        while(True):
+                        initAlpha = newPop[-1][-1].fill[3]
+                        newPop[-1][-1].fill[3] = clamp(initAlpha + x*5, 0, 255)
+                        
+                        im2 = im.copy()
+                        draw = ImageDraw.Draw(im2, 'RGBA')
+                        newPop[-1][-1].DrawOnImage(draw)
+                        
+                        currFit = fitness2(im2)
+                        
+                        if currFit >= newFit:
+                            newPop[-1][-1].fill[3] = initAlpha
+                            break
+                        else:
+                            newFit = currFit
+                          
+                # Optimize the 3 vertices
+                for x in [0,2]:
+                    for y in [0, 1]:
+                        for z in [-1,1]:
+                            while(True):
+                                initVal = newPop[-1][-1].vertices[x][y]
                                 
-                            initAlpha = newPop[-1][-1].fill[3]
-                            newPop[-1][-1].fill[3] = clamp(initAlpha + x*5, 0, 255)
-                            
-                            im2 = im.copy()
-                            draw = ImageDraw.Draw(im2, 'RGBA')
-                            newPop[-1][-1].DrawOnImage(draw)
-                            
-                            currFit = fitness2(im2)
-                            #print(str(currFit) + " " + str(initFit))
-                            
-                            if currFit >= newFit:
-                                newPop[-1][-1].fill[3] = initAlpha
-                                break
-                            else:
-                                newFit = currFit
-                              
-                    # Optimize the 3 vertices
-                    for x in [0,2]:
-                        for y in [0, 1]:
-                            for z in [-1,1]:
-                                while(True):
-                                    initVal = newPop[-1][-1].vertices[x][y]
+                                if y == 0:
+                                    limit = maxX
+                                else:
+                                    limit = maxY
                                     
-                                    if y == 0:
-                                        limit = maxX
-                                    else:
-                                        limit = maxY
-                                        
-                                    newPop[-1][-1].vertices[x][y] = clamp(initVal + z*15, 0, limit)
-                                    
-                                    im2 = im.copy()
-                                    draw = ImageDraw.Draw(im2, 'RGBA')
-                                    newPop[-1][-1].DrawOnImage(draw)
-                                    
-                                    currFit = fitness2(im2)
-                                    
-                                    if currFit >= newFit:
-                                        newPop[-1][-1].vertices[x][y] = initVal
-                                        break
-                                    else:
-                                        newFit = currFit
+                                newPop[-1][-1].vertices[x][y] = clamp(initVal + z*15, 0, limit)
                                 
-                    
-                   # im = im2.copy()
-                else: 
-                    del(newPop[-1][-1])
-                    newFit = prevFit
+                                im2 = im.copy()
+                                draw = ImageDraw.Draw(im2, 'RGBA')
+                                newPop[-1][-1].DrawOnImage(draw)
+                                
+                                currFit = fitness2(im2)
+                                
+                                if currFit >= newFit:
+                                    newPop[-1][-1].vertices[x][y] = initVal
+                                    break
+                                else:
+                                    newFit = currFit
                     
             else:
                 newFit = prevFit
                                     
             
-            
-            for k in range(0, len(newPop[-1])):
-               # if random.randint(0, 100) < 50:
-                    #newPop[-1][k] = copy.deepcopy(population[randomParent][k])
-                    # Mutation
+            # Random Mutation
+            for k in range(0, len(newPop[-1])):   
                 if len(newPop[-1]) > 0:
-                    #print("hi")
                     if random.randint(0, 100) < 1:
-                        origPoly = copy.deepcopy(newPop[-1][k])
                         newPop[-1][k].SoftMutate()
-                
-                        currFit,_ = fitness(newPop[-1])
                     
-                        if currFit >= newFit:
-                            newPop[-1][k] = copy.deepcopy(origPoly)
-                            #currFit = prevFit
-                        else:
-                            newFit = currFit
-                            
+            # Crossover
+            if random.randint(0,100) < 100:
+                
+                for x in range(0, len(population[i])-1):
+                    if random.randint(0,1) == 1:
+                        newPop[-1][x].vertices = population[randomParent][x].vertices
+                        newPop[-1][x].fill = population[randomParent][x].fill
+                    
+            newFit,_ = fitness(newPop[-1])
             newPopFitness.append(newFit)                           
                                         
+            
 
-    
     
     newPop = sorted(list(zip(newPopFitness, newPop)), key=lambda x: x[0])
     newPopFitness = [x[0] for x in newPop]
@@ -301,70 +298,52 @@ def CreateNewGen(population, popFitness):
         newPop[0] = copyPolyList(population[0])
         newPopFitness[newPopFitness.index(min(newPopFitness))] = bestPrevFitness
         
-#  
-#    elite = 5
-#    newPop[0:elite] = copy.deepcopy(population[0:elite]) # ELITISM
-#    
-##    for j in range(2,8):
-##        if random.randint(0,100) < 10:
-##            for x in newPop[j]:
-##                x.SoftMutate()
-#    
-#    maxDiff = 255*imageX*imageY*uniqueRGB
-#    
-#    # For the rest of the new population, use roulette wheel selection to select two parents
-#    for j in range(elite,popSize):
-#        
-#        S = popSize*maxDiff - sum(popFitness)
-#    
-#        parentIndex = []
-#        for k in range(2):
-#            r = random.randint(0, S)
-#            s = 0
-#            index = 0
-#            while s <= r:
-#                s = s + maxDiff - popFitness[index]
-#                if s > r:
-#                    parentIndex.append(index)
-#                index = index + 1
-#                
-#        # CROSSOVER!!
-#        random.shuffle(parentIndex)
-#        newPop[j] = copy.deepcopy(population[parentIndex[1]])
-#        
-#        if random.randint(0,100) < 100:
-#            
-#            for i in range(0, nPoly-1):
-#                if random.randint(0,1) == 1:
-#                    newPop[j][i] = copy.deepcopy(population[parentIndex[0]][i])
-##            a = random.randint(0, nPoly-1)
-##            b = random.randint(0, nPoly-1)
-##            if a > b:
-##                a,b = b,a
-##                
-##            for i in range(a,b):
-##                newPop[j][i] = copy.deepcopy(population[parentIndex[0]][i])
-#        
-#        # Mutation rate
-#        if random.randint(0,100) < 1:
-#            for x in newPop[j]:
-#                x.SoftMutate()
-            
+
             
     return newPop, newPopFitness
 
 def updateImg(i):
-    global population, popFitness, gen
+    global population, popFitness, gen, roi1, roi2, imageY, imageX, imageMinY, imageMinX, refArray
+    
+    
+#    roi1 = [75,75]
+#    roi2 = [170,170]
     
     population, popFitness = CreateNewGen(population, popFitness)
-            
-    im = DrawImage(population[0], 255, 255)
+    
+    best = copy.deepcopy(population[0])
+    
+    ## ?? How do I adjust if I'm going from full frame to focused??
+#    for x in best:
+#        x.vertices = [[a[0] + roi1[0], a[1] + roi1[1]] for a in x.vertices]
+#                    
+    im = DrawImage(best, 255, 255)
 
     #maxDiff = 255*imageX*imageY*uniqueRGB
     #print(1 - min(popFitness)/maxDiff)
     gen += 1
     print(str(1-min(popFitness)) + " " + str(gen))
     myobj.set_data(im)
+    
+#    if gen == 100:
+#        for x in population:
+#            for y in x:
+#                y.vertices = [[a[0] + roi1[0], a[1] + roi1[1]] for a in y.vertices]
+#                
+#                        
+#        roi1 = [75,75]
+#        roi2 = [170,170]
+#        
+#        imageY = roi2[0]+1
+#        imageX = roi2[1]+1
+#        
+#        imageMinY = roi1[0]
+#        imageMinX = roi1[1]
+#        
+#        refArray = refArrayOrig[roi1[0]:roi2[0]+1, roi1[1]:roi2[1]+1]
+#        
+#        popFitness = [1 for x in popFitness]
+
     
     
     return myobj
@@ -415,9 +394,9 @@ else:
             
             population, popFitness = CreateNewGen(population, popFitness)
             
-            if x % 300 == 0:
-                DrawImage(population[0], imageX, imageY).save("img/"+str(x)+".png")
-                imList.append(DrawImage(population[0], imageX, imageY))
+#            if x % 300 == 0:
+#                DrawImage(population[0], imageX, imageY).save("img/"+str(x)+".png")
+#                imList.append(DrawImage(population[0], imageX, imageY))
             gen += 1
             print(str(1-min(popFitness)) + " " + str(gen))
             
